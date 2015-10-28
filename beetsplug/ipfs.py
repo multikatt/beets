@@ -54,6 +54,9 @@ class IPFSPlugin(BeetsPlugin):
         cmd.parser.add_option('-m', '--play', dest='play',
                                     action='store_true',
                                     help='Play music from remote libraries')
+        cmd.parser.add_option('-w', '--web', dest='web',
+                                    action='store_true',
+                                    help='Open remote library in web player')
 
         def func(lib, opts, args):
             if opts.add:
@@ -80,6 +83,9 @@ class IPFSPlugin(BeetsPlugin):
             if opts.play:
                 self.ipfs_play(lib, opts, ui.decargs(args))
 
+            if opts.web:
+                self.ipfs_web(lib, opts, ui.decargs(args))
+
         cmd.func = func
         return [cmd]
 
@@ -87,6 +93,14 @@ class IPFSPlugin(BeetsPlugin):
         if task.is_album:
             if self.ipfs_add(task.album):
                 task.album.store()
+
+    def ipfs_web(self, lib, opts, args):
+        from beetsplug.web import WebPlugin, app
+        web = WebPlugin()
+        app.config['lib'] = self.get_remote_lib(lib)
+        app.config['port'] = web.config['port'].get()
+        app.config['host'] = web.config['host'].get()
+        app.run(port=app.config['port'], host=app.config['host'])
 
     def ipfs_play(self, lib, opts, args):
         from beetsplug.play import PlayPlugin
